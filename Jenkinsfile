@@ -3,11 +3,12 @@ pipeline {
     stages {
         stage('Terraform plan - Feature Branch') {
             when {
-                branch "feature/.*"
+                branch pattern: "feature/.*", comparator: "REGEXP"                
+            }
             steps {
                 sh "terraform init"
-                sh "terraform plan"
-            }    
+                sh "terraform plan"   
+            }
         }
     }
 }
