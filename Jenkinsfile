@@ -4,9 +4,12 @@ pipeline {
         stage('Terraform plan - Feature Branch') {
             when {
                 branch "feature/.*"
+            }    
             steps {
-                sh "terraform init"
-                sh "terraform plan"
+                sh '''
+                   terraform init
+                   terraform plan -var-file=variables/dev-us-east-1.tfvars
+                '''
             }    
         }
     }
