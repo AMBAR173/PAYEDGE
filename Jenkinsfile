@@ -40,7 +40,7 @@ pipeline {
             steps {
                 sh '''
                    terraform init
-                   terraform plan -var-file=variables/dev-us-east-1.tfvars
+                   terraform plan
                 '''
             }
         }
