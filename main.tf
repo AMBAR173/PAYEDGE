@@ -1,6 +1,6 @@
 terraform {
   backend "remote" {
-    organization = "Payment-Gateway-DEV"
+    organization = "Payment-Gatway-DEV"
 
     workspaces {
       name = "vpc-us-east-1"
