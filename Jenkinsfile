@@ -4,6 +4,11 @@ pipeline {
         TF_TOKEN_app_terraform_io = credentials('terraform-cloud-token')
     }
     stages {
+        stage('Clean workspace') {
+            steps {
+                deleteDir()
+            }
+        }
         stage('Terraform plan - Feature Branch') {
             when {
                 branch pattern: "feature/.*", comparator: "REGEXP"
