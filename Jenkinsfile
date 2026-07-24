@@ -46,7 +46,7 @@ pipeline {
         }
         stage('Terraform apply - Dev') {
             when {
-                branch pattern: "develop", comparator: "EQUALS"
+                branch 'develop'
             }
             steps {
                 sh '''
