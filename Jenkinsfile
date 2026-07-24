@@ -44,5 +44,17 @@ pipeline {
                 '''
             }
         }
+        stage('Terraform apply - Dev') {
+            when {
+                branch pattern: "develop", comparator: "EQUALS"
+            }
+            steps {
+                sh '''
+                   terraform init
+                   terraform plan 
+                   terraform apply -auto-approve
+                '''
+            }
+        }
     }
 }
