@@ -1,0 +1,5 @@
+environments:
+  DEV:
+    us-east-1:
+      organization: Payment-Gateway-DEV
+      workspace_name: vpc-us-east-1
