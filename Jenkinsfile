@@ -4,8 +4,10 @@ pipeline {
         skipDefaultCheckout(true)
     }
     parameters {
+        choice(name: 'ACTION', choices: ['PLAN','APPLY','DESTROY'], description: 'Pipeline action')
         choice(name: 'ENV', choices: ['DEV'], description: 'Target enviornment')
         choice(name: 'REGION', choices: ['us-east-1'], description: 'AWS region')
+        string(name: 'CHANGE_NUMBER', defaultValue: '', description: 'Change number (required for SANDBOX/PROD)')
     }
     environment {
         TF_TOKEN_app_terraform_io = credentials('terraform-cloud-token')
@@ -56,7 +58,10 @@ pipeline {
         }
         stage('Terraform plan - Feature Branch') {
             when {
-                branch pattern: "feature/.*", comparator: "REGEXP"
+                allOf {
+                    expression { return params.ACTION == 'PLAN' }
+                    branch pattern: "feature/.*", comparator: "REGEXP"
+                }
             }
             steps {
                                 sh '''
@@ -84,7 +89,10 @@ TFVARS
         }
         stage('Terraform plan - Dev') {
             when {
-                branch 'develop'
+                allOf {
+                    expression { return params.ACTION == 'PLAN' }
+                    branch 'develop'
+                }
             }
             steps {
                                 sh '''
@@ -95,6 +103,79 @@ terraform {
         organization = "$TF_ORGANIZATION"
         workspaces {
             name = "$TF_WORKSPACE_NAME"
+        }
+        stage('Terraform apply') {
+            when {
+                allOf {
+                    expression { return params.ACTION == 'APPLY' }
+                    branch 'develop'
+                }
+            }
+            steps {
+                script {
+                    input message: "Proceed with terraform apply for ${env.TF_WORKSPACE_NAME} (${params.ENV}/${params.REGION})?", ok: 'Apply'
+
+                    sh '''
+                       # Ensure backend and vars are present
+                       cat > backend.tf <<EOF
+terraform {
+    backend "remote" {
+        organization = "$TF_ORGANIZATION"
+        workspaces {
+            name = "$TF_WORKSPACE_NAME"
+        }
+    }
+}
+EOF
+
+                       cat > terraform.auto.tfvars <<TFVARS
+env = "${DEPLOY_ENV}"
+region = "${AWS_REGION}"
+TFVARS
+
+                       terraform init -input=false
+                       terraform apply -auto-approve
+                    '''
+                }
+            }
+        }
+
+        stage('Terraform destroy') {
+            when {
+                allOf {
+                    expression { return params.ACTION == 'DESTROY' }
+                    branch 'develop'
+                }
+            }
+            steps {
+                script {
+                    def confirm = input message: "DANGER: Destroy workspace ${env.TF_WORKSPACE_NAME}. Type DESTROY to confirm.", parameters: [string(name: 'CONFIRM', defaultValue: '')]
+                    if (confirm != 'DESTROY') {
+                        error 'Destroy confirmation failed - aborting.'
+                    }
+
+                    sh '''
+                       cat > backend.tf <<EOF
+terraform {
+    backend "remote" {
+        organization = "$TF_ORGANIZATION"
+        workspaces {
+            name = "$TF_WORKSPACE_NAME"
+        }
+    }
+}
+EOF
+
+                       cat > terraform.auto.tfvars <<TFVARS
+env = "${DEPLOY_ENV}"
+region = "${AWS_REGION}"
+TFVARS
+
+                       terraform init -input=false
+                       terraform destroy -auto-approve
+                    '''
+                }
+            }
         }
     }
 }
