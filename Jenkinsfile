@@ -72,10 +72,13 @@ terraform {
 }
 EOF
 
+                                     cat > terraform.auto.tfvars <<TFVARS
+env = "${DEPLOY_ENV}"
+region = "${AWS_REGION}"
+TFVARS
+
                                      terraform init -input=false
-                                     terraform plan -lock=false -input=false \
-                                                -var "env=${DEPLOY_ENV}" \
-                                                -var "region=${AWS_REGION}"
+                                     terraform plan -lock=false -input=false
                                 '''
             }
         }
@@ -97,10 +100,13 @@ terraform {
 }
 EOF
 
+                                     cat > terraform.auto.tfvars <<TFVARS
+env = "${DEPLOY_ENV}"
+region = "${AWS_REGION}"
+TFVARS
+
                                      terraform init -input=false
-                                     terraform plan -lock=false -input=false \
-                                                -var "env=${DEPLOY_ENV}" \
-                                                -var "region=${AWS_REGION}"
+                                     terraform plan -lock=false -input=false
                                 '''
             }
         }
