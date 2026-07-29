@@ -59,14 +59,24 @@ pipeline {
                 branch pattern: "feature/.*", comparator: "REGEXP"
             }
             steps {
-                sh '''
-                   terraform init \
-                        -backend-config="organization=${TF_ORGANIZATION}" \
-                        -backend-config="workspaces.name=${TF_WORKSPACE_NAME}"
-                   terraform plan -lock=false -input=false \
-                        -var "env=${DEPLOY_ENV}" \
-                        -var "region=${AWS_REGION}"
-                '''
+                                sh '''
+                                     # Generate backend.tf dynamically so workspace name is set correctly
+                                     cat > backend.tf <<EOF
+terraform {
+    backend "remote" {
+        organization = "$TF_ORGANIZATION"
+        workspaces {
+            name = "$TF_WORKSPACE_NAME"
+        }
+    }
+}
+EOF
+
+                                     terraform init -input=false
+                                     terraform plan -lock=false -input=false \
+                                                -var "env=${DEPLOY_ENV}" \
+                                                -var "region=${AWS_REGION}"
+                                '''
             }
         }
         stage('Terraform plan - Dev') {
@@ -74,14 +84,24 @@ pipeline {
                 branch 'develop'
             }
             steps {
-                sh '''
-                   terraform init \
-                        -backend-config="organization=${TF_ORGANIZATION}" \
-                        -backend-config="workspaces.name=${TF_WORKSPACE_NAME}"
-                   terraform plan -lock=false -input=false \
-                        -var "env=${DEPLOY_ENV}" \
-                        -var "region=${AWS_REGION}"
-                '''
+                                sh '''
+                                     # Generate backend.tf dynamically so workspace name is set correctly
+                                     cat > backend.tf <<EOF
+terraform {
+    backend "remote" {
+        organization = "$TF_ORGANIZATION"
+        workspaces {
+            name = "$TF_WORKSPACE_NAME"
+        }
+    }
+}
+EOF
+
+                                     terraform init -input=false
+                                     terraform plan -lock=false -input=false \
+                                                -var "env=${DEPLOY_ENV}" \
+                                                -var "region=${AWS_REGION}"
+                                '''
             }
         }
     }
