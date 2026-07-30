@@ -95,29 +95,9 @@ TFVARS
                 }
             }
             steps {
-                                sh '''
-                                     # Generate backend.tf dynamically so workspace name is set correctly
-                                     cat > backend.tf <<EOF
-terraform {
-    backend "remote" {
-        organization = "$TF_ORGANIZATION"
-        workspaces {
-            name = "$TF_WORKSPACE_NAME"
-        }
-        stage('Terraform apply') {
-            when {
-                allOf {
-                    expression { return params.ACTION == 'APPLY' }
-                    branch 'develop'
-                }
-            }
-            steps {
-                script {
-                    input message: "Proceed with terraform apply for ${env.TF_WORKSPACE_NAME} (${params.ENV}/${params.REGION})?", ok: 'Apply'
-
-                    sh '''
-                       # Ensure backend and vars are present
-                       cat > backend.tf <<EOF
+                sh '''
+                    # Generate backend.tf dynamically so workspace name is set correctly
+                    cat > backend.tf <<EOF
 terraform {
     backend "remote" {
         organization = "$TF_ORGANIZATION"
@@ -128,13 +108,46 @@ terraform {
 }
 EOF
 
-                       cat > terraform.auto.tfvars <<TFVARS
+                    cat > terraform.auto.tfvars <<TFVARS
 env = "${DEPLOY_ENV}"
 region = "${AWS_REGION}"
 TFVARS
 
-                       terraform init -input=false
-                       terraform apply -auto-approve
+                    terraform init -input=false
+                    terraform plan -lock=false -input=false
+                '''
+            }
+        }
+
+        stage('Terraform apply') {
+            when {
+                allOf {
+                    expression { return params.ACTION == 'APPLY' }
+                    branch 'develop'
+                }
+            }
+            steps {
+                script {
+                    input message: "Proceed with terraform apply for ${env.TF_WORKSPACE_NAME} (${params.ENV}/${params.REGION})?", ok: 'Apply'
+                    sh '''
+                        cat > backend.tf <<EOF
+terraform {
+    backend "remote" {
+        organization = "$TF_ORGANIZATION"
+        workspaces {
+            name = "$TF_WORKSPACE_NAME"
+        }
+    }
+}
+EOF
+
+                        cat > terraform.auto.tfvars <<TFVARS
+env = "${DEPLOY_ENV}"
+region = "${AWS_REGION}"
+TFVARS
+
+                        terraform init -input=false
+                        terraform apply -auto-approve
                     '''
                 }
             }
@@ -153,9 +166,8 @@ TFVARS
                     if (confirm != 'DESTROY') {
                         error 'Destroy confirmation failed - aborting.'
                     }
-
                     sh '''
-                       cat > backend.tf <<EOF
+                        cat > backend.tf <<EOF
 terraform {
     backend "remote" {
         organization = "$TF_ORGANIZATION"
@@ -166,29 +178,15 @@ terraform {
 }
 EOF
 
-                       cat > terraform.auto.tfvars <<TFVARS
+                        cat > terraform.auto.tfvars <<TFVARS
 env = "${DEPLOY_ENV}"
 region = "${AWS_REGION}"
 TFVARS
 
-                       terraform init -input=false
-                       terraform destroy -auto-approve
+                        terraform init -input=false
+                        terraform destroy -auto-approve
                     '''
                 }
-            }
-        }
-    }
-}
-EOF
-
-                                     cat > terraform.auto.tfvars <<TFVARS
-env = "${DEPLOY_ENV}"
-region = "${AWS_REGION}"
-TFVARS
-
-                                     terraform init -input=false
-                                     terraform plan -lock=false -input=false
-                                '''
             }
         }
     }
