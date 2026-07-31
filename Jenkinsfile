@@ -131,7 +131,7 @@ TFVARS
                     input message: "Proceed with Terraform Cloud apply for ${env.TF_WORKSPACE_NAME} (${params.ENV}/${params.REGION})?", ok: 'Apply'
 
                     sh '''
-                        set -euo pipefail
+                        set -e
                         WORKSPACE_ID=$(curl -sS -H "Authorization: Bearer ${TF_TOKEN_app_terraform_io}" \
                             -H "Content-Type: application/vnd.api+json" \
                             "https://app.terraform.io/api/v2/organizations/${TF_ORGANIZATION}/workspaces/${TF_WORKSPACE_NAME}" \
@@ -141,6 +141,7 @@ TFVARS
 {"data":{"attributes":{"message":"Jenkins triggered apply","is-destroy":false,"auto-apply":true},"type":"runs","relationships":{"workspace":{"data":{"type":"workspaces","id":"${WORKSPACE_ID}"}}}}}
 EOF
 
+                        echo "Creating Terraform Cloud run for workspace ${TF_WORKSPACE_NAME}"
                         curl -sS -H "Authorization: Bearer ${TF_TOKEN_app_terraform_io}" \
                             -H "Content-Type: application/vnd.api+json" \
                             -d @run.json https://app.terraform.io/api/v2/runs
@@ -163,7 +164,7 @@ EOF
                         error 'Destroy confirmation failed - aborting.'
                     }
                     sh '''
-                        set -euo pipefail
+                        set -e
                         WORKSPACE_ID=$(curl -sS -H "Authorization: Bearer ${TF_TOKEN_app_terraform_io}" \
                             -H "Content-Type: application/vnd.api+json" \
                             "https://app.terraform.io/api/v2/organizations/${TF_ORGANIZATION}/workspaces/${TF_WORKSPACE_NAME}" \
@@ -173,6 +174,7 @@ EOF
 {"data":{"attributes":{"message":"Jenkins triggered destroy","is-destroy":true,"auto-apply":true},"type":"runs","relationships":{"workspace":{"data":{"type":"workspaces","id":"${WORKSPACE_ID}"}}}}}
 EOF
 
+                        echo "Creating Terraform Cloud destroy run for workspace ${TF_WORKSPACE_NAME}"
                         curl -sS -H "Authorization: Bearer ${TF_TOKEN_app_terraform_io}" \
                             -H "Content-Type: application/vnd.api+json" \
                             -d @run.json https://app.terraform.io/api/v2/runs
