@@ -138,7 +138,7 @@ TFVARS
                             | python3 -c "import sys, json; print(json.load(sys.stdin)['data']['id'])")
 
                         cat > run.json <<EOF
-{"data":{"attributes":{"message":"Jenkins triggered apply","is-destroy":false,"auto-apply":true},"type":"runs","relationships":{"workspace":{"data":{"type":"workspaces","id":"${WORKSPACE_ID}"}}}}}
+{"data":{"attributes":{"message":"Jenkins triggered apply","is-destroy":false,"auto-apply":true,"allow-empty-apply":true,"plan-only":false},"type":"runs","relationships":{"workspace":{"data":{"type":"workspaces","id":"${WORKSPACE_ID}"}}}}}
 EOF
 
                         echo "Creating Terraform Cloud run for workspace ${TF_WORKSPACE_NAME}"
@@ -171,7 +171,7 @@ EOF
                             | python3 -c "import sys, json; print(json.load(sys.stdin)['data']['id'])")
 
                         cat > run.json <<EOF
-{"data":{"attributes":{"message":"Jenkins triggered destroy","is-destroy":true,"auto-apply":true},"type":"runs","relationships":{"workspace":{"data":{"type":"workspaces","id":"${WORKSPACE_ID}"}}}}}
+{"data":{"attributes":{"message":"Jenkins triggered destroy","is-destroy":true,"auto-apply":true,"allow-empty-apply":true,"plan-only":false},"type":"runs","relationships":{"workspace":{"data":{"type":"workspaces","id":"${WORKSPACE_ID}"}}}}}
 EOF
 
                         echo "Creating Terraform Cloud destroy run for workspace ${TF_WORKSPACE_NAME}"
